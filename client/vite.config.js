@@ -1,0 +1,18 @@
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
+
+const BACKEND_URL = process.env.VITE_API_BASE || 'http://localhost:3001'
+
+// https://vite.dev/config/
+export default defineConfig({
+  plugins: [react()],
+  server: {
+    allowedHosts: ['judicial-chess-cricket.ngrok-free.dev', '*.ngrok-free.dev', 'localhost'],
+    proxy: {
+      '/stories': BACKEND_URL,
+      '/orders': BACKEND_URL,
+      '/submit-order': BACKEND_URL,
+      '/proxy-pdf': BACKEND_URL,
+    }
+  }
+})
