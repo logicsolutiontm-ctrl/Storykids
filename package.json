@@ -1,0 +1,14 @@
+{
+  "private": true,
+  "name": "storykid",
+  "version": "1.0.0",
+  "scripts": {
+    "build": "npm --prefix client run build",
+    "dev": "npm --prefix client run dev",
+    "start": "node server/index.js"
+  },
+  "workspaces": [
+    "client",
+    "server"
+  ]
+}
