@@ -62,7 +62,7 @@ app.use(cors({
     console.log("Blocked Unauthorized Origin:", origin);
     callback(new Error('Not allowed by CORS'));
   },
-  
+
   methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   optionsSuccessStatus: 204,
@@ -469,20 +469,21 @@ app.patch('/orders/:id/status', async (req, res) => {
 // ── STORIES ──
 
 app.get('/stories', async (req, res) => {
-  console.log('🔍 Handler: GET /stories')
-  if (!requireSupabase(res)) return
+  if (!supabase) {
+    console.error("❌ Supabase client is not initialized!");
+    return res.status(500).json({ error: "Database not connected" });
+  }
 
   try {
-    const { data, error } = await supabase
-      .from('stories')
-      .select('*')
-      .order('created_at', { ascending: true })
-    if (error) return res.status(500).json({ success: false, error })
-    res.json({ success: true, stories: data })
+    const { data, error } = await supabase.from('stories').select('*');
+    if (error) throw error;
+    res.json(data);
   } catch (err) {
-    res.status(500).json({ success: false, error: 'Server error' })
+    console.error("❌ Fetch stories error:", err);
+    res.status(500).json({ error: "Failed to fetch stories" });
   }
-})
+});
+console.log("DEBUG: SUPABASE_URL set?", !!process.env.SUPABASE_URL);
 
 // Get single story by id
 app.get('/stories/:id', async (req, res) => {
