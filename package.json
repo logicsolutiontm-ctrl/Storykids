@@ -7,8 +7,15 @@
     "dev": "npm --prefix client run dev",
     "start": "node server/index.js"
   },
+  "optionalDependencies": {
+    "@rollup/rollup-linux-x64-gnu": "^4.62.0",
+    "@rollup/rollup-win32-x64-msvc": "^4.62.0"
+  },
   "workspaces": [
     "client",
     "server"
-  ]
+  ],
+  "devDependencies": {
+    "@rollup/rollup-win32-x64-msvc": "^4.62.0"
+  }
 }
