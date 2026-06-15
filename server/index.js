@@ -26,8 +26,8 @@ const upload = multer({
 })
 
 const localOrigins = [
-  'https://storykids.fun',
-  'https://www.storykids.fun',
+  'https://storykids.fun',          // Added naked domain explicitly
+  'https://www.storykids.fun',      // Added www domain explicitly
   'http://localhost:5173',
   'http://localhost:5174',
   'http://localhost:5175',
@@ -53,18 +53,16 @@ const isAllowedOrigin = (origin) => {
 }
 
 app.use(cors({
- origin: (origin, callback) => {
-    // 1. Allow internal health checks or server-to-server calls with no origin
+  origin: (origin, callback) => {
+    // Allow server-to-server or automated health checks without origin headers
     if (!origin) return callback(null, true);
     
-    // 2. Check if the origin matches any domain inside your localOrigins array
-    if (localOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      console.log("CORS Blocked Origin:", origin);
-      callback(new Error('Not allowed by CORS'));
-    }
+    if (isAllowedOrigin(origin)) return callback(null, true);
+    
+    console.log("Blocked Unauthorized Origin:", origin);
+    callback(new Error('Not allowed by CORS'));
   },
+  
   methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   optionsSuccessStatus: 204,
