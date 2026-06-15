@@ -54,12 +54,15 @@ const isAllowedOrigin = (origin) => {
 
 app.use(cors({
  origin: (origin, callback) => {
-    const allowed = getAllowedOrigins()
-    if (!origin || allowed.has(origin)) {
-      callback(null, true)
+    // 1. Allow internal health checks or server-to-server calls with no origin
+    if (!origin) return callback(null, true);
+    
+    // 2. Check if the origin matches any domain inside your localOrigins array
+    if (localOrigins.includes(origin)) {
+      callback(null, true);
     } else {
       console.log("CORS Blocked Origin:", origin);
-      callback(new Error('Not allowed by CORS'))
+      callback(new Error('Not allowed by CORS'));
     }
   },
   methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE'],
