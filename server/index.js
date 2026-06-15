@@ -26,6 +26,8 @@ const upload = multer({
 })
 
 const localOrigins = [
+  'https://storykids.fun',
+  'https://www.storykids.fun',
   'http://localhost:5173',
   'http://localhost:5174',
   'http://localhost:5175',
@@ -51,9 +53,14 @@ const isAllowedOrigin = (origin) => {
 }
 
 app.use(cors({
-  origin: (origin, callback) => {
-    if (isAllowedOrigin(origin)) return callback(null, true)
-    callback(new Error('Not allowed by CORS'))
+ origin: (origin, callback) => {
+    const allowed = getAllowedOrigins()
+    if (!origin || allowed.has(origin)) {
+      callback(null, true)
+    } else {
+      console.log("CORS Blocked Origin:", origin);
+      callback(new Error('Not allowed by CORS'))
+    }
   },
   methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE'],
   allowedHeaders: ['Content-Type', 'Authorization'],
