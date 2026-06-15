@@ -25,3 +25,5 @@ node_modules/.vite
 
 # IDE files
 .vscode/
+
+package-lock.json
