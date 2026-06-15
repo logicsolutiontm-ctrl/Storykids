@@ -31,13 +31,28 @@ const localOrigins = [
   'http://localhost:5175',
   'http://127.0.0.1:5173',
   'http://127.0.0.1:5174',
-  'http://127.0.0.1:5175'
+  'http://127.0.0.1:5175',
+  'https://localhost:5173',
+  'https://127.0.0.1:5173'
 ]
+const extraOrigins = (process.env.CORS_ORIGIN || process.env.FRONTEND_URL || '')
+  .split(',')
+  .map(value => value.trim())
+  .filter(Boolean)
+const allowedOrigins = new Set([...localOrigins, ...extraOrigins])
+
+const isAllowedOrigin = (origin) => {
+  if (!origin) return true
+  if (allowedOrigins.has(origin)) return true
+  return /^(https?:\/\/)(localhost|127\.0\.0\.1)(:\d+)?$/i.test(origin)
+    || /(?:^|\.)vercel\.app$/i.test(origin)
+    || /(?:^|\.)render\.com$/i.test(origin)
+    || /(?:^|\.)netlify\.app$/i.test(origin)
+}
+
 app.use(cors({
   origin: (origin, callback) => {
-    if (!origin) return callback(null, true)
-    if (localOrigins.includes(origin)) return callback(null, true)
-    if (origin.startsWith('http://localhost:') || origin.startsWith('http://127.0.0.1:')) return callback(null, true)
+    if (isAllowedOrigin(origin)) return callback(null, true)
     callback(new Error('Not allowed by CORS'))
   },
   methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE'],
