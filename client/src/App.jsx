@@ -20,8 +20,5 @@ function App() {
     </BrowserRouter>
   )
 }
-import myNewLogo from './assets/new-logo.png';
-// ... then use it in the JSX
-<img src={myNewLogo} alt="StoryKid Logo" />
 
 export default App
