@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { API_BASE } from './api'
+import AdminLogin from './AdminLogin'
 const STATUS_COLORS = {
   new:         { bg: 'rgba(245,158,11,0.2)',  border: 'rgba(245,158,11,0.5)',  text: '#fbbf24', label: '🆕 New' },
   in_progress: { bg: 'rgba(99,102,241,0.2)',  border: 'rgba(99,102,241,0.5)',  text: '#818cf8', label: '⚙️ In Progress' },
@@ -993,6 +994,44 @@ function StoryPageTab() {
 // ── MAIN ADMIN ──
 export default function Admin() {
   const [tab, setTab] = useState('orders')
+  const [isLoggedIn, setIsLoggedIn] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
+
+  // Check if user is already authenticated
+  useEffect(() => {
+    const authenticated = localStorage.getItem('admin_authenticated') === 'true'
+    const sessionTime = parseInt(localStorage.getItem('admin_session_time') || '0')
+    const sessionExpiry = 24 * 60 * 60 * 1000 // 24 hours
+    
+    if (authenticated && (Date.now() - sessionTime) < sessionExpiry) {
+      setIsLoggedIn(true)
+    } else {
+      localStorage.removeItem('admin_authenticated')
+      localStorage.removeItem('admin_session_time')
+    }
+    setIsLoading(false)
+  }, [])
+
+  const handleLogout = () => {
+    localStorage.removeItem('admin_authenticated')
+    localStorage.removeItem('admin_session_time')
+    setIsLoggedIn(false)
+  }
+
+  if (isLoading) {
+    return (
+      <div style={{minHeight:'100vh', display:'flex', alignItems:'center', justifyContent:'center', background:'linear-gradient(135deg, #0f0a1e 0%, #1a0f3a 50%, #0a1628 100%)', color:'white'}}>
+        <div style={{textAlign:'center'}}>
+          <div style={{fontSize:48, marginBottom:16}}>✨</div>
+          <p>Loading dashboard...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (!isLoggedIn) {
+    return <AdminLogin onLogin={() => setIsLoggedIn(true)} />
+  }
 
   return (
     <>
@@ -1003,6 +1042,31 @@ export default function Admin() {
           <div className="ad-topbar-right">
             <div className="ad-live-dot" />
             <span className="ad-live-text">Dashboard</span>
+            <button
+              onClick={handleLogout}
+              style={{
+                padding: '8px 16px',
+                borderRadius: '10px',
+                border: 'none',
+                background: 'rgba(255,255,255,0.1)',
+                color: 'rgba(255,255,255,0.7)',
+                fontFamily: "'Nunito', sans-serif",
+                fontSize: '13px',
+                fontWeight: '700',
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+              }}
+              onMouseEnter={(e) => {
+                e.target.style.background = 'rgba(220,50,50,0.2)'
+                e.target.style.color = '#ff8080'
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.background = 'rgba(255,255,255,0.1)'
+                e.target.style.color = 'rgba(255,255,255,0.7)'
+              }}
+            >
+              🚪 Logout
+            </button>
           </div>
         </div>
 
