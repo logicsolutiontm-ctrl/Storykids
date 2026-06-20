@@ -23,8 +23,9 @@ services:
       - key: CORS_ORIGIN
         sync: false
 
-  - type: static_site
+  - type: web
     name: storykid-client
+    env: static
     rootDir: client
     buildCommand: npm install && npm run build
     staticPublishPath: dist
