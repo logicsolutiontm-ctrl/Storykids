@@ -5,12 +5,19 @@ export default function AdminLogin({ onLogin }) {
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
 
-  // Get password from environment variable or use a default secure password
-  const ADMIN_PASSWORD = import.meta.env.VITE_ADMIN_PASSWORD || 'storykid2024'
+  // Require explicit password configuration for production safety.
+  const ADMIN_PASSWORD = import.meta.env.VITE_ADMIN_PASSWORD
+  const isPasswordConfigured = Boolean(ADMIN_PASSWORD)
 
   const handleLogin = (e) => {
     e.preventDefault()
     setError('')
+
+    if (!isPasswordConfigured) {
+      setError('Admin password is not configured. Set VITE_ADMIN_PASSWORD in your environment.')
+      return
+    }
+
     setIsLoading(true)
 
     // Simulate a slight delay for security feel
@@ -45,9 +52,9 @@ export default function AdminLogin({ onLogin }) {
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="Enter admin password"
+              placeholder={isPasswordConfigured ? 'Enter admin password' : 'Admin password not configured'}
               style={styles.input}
-              disabled={isLoading}
+              disabled={isLoading || !isPasswordConfigured}
               autoFocus
             />
           </div>
@@ -56,11 +63,11 @@ export default function AdminLogin({ onLogin }) {
 
           <button
             type="submit"
-            disabled={isLoading || !password}
+            disabled={isLoading || !password || !isPasswordConfigured}
             style={{
               ...styles.button,
-              opacity: isLoading || !password ? 0.6 : 1,
-              cursor: isLoading || !password ? 'not-allowed' : 'pointer'
+              opacity: isLoading || !password || !isPasswordConfigured ? 0.6 : 1,
+              cursor: isLoading || !password || !isPasswordConfigured ? 'not-allowed' : 'pointer'
             }}
           >
             {isLoading ? '🔄 Verifying...' : '🔓 Access Dashboard'}

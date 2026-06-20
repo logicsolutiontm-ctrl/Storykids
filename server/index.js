@@ -261,6 +261,7 @@ app.use('/swagger', swaggerUi.serve, swaggerUi.setup(swaggerDocument))
 // ── EMAIL FUNCTION ──
 async function sendEmails(order) {
   const { childName, parentEmail, language, interests, characters, selectedValues, specialRequest } = order
+  const adminDashboardUrl = `${(process.env.FRONTEND_URL || 'https://storykids.fun').replace(/\/$/, '')}/admin`
 
   if (!resend) {
     const reason = 'RESEND_API_KEY is not set. Emails cannot be sent.'
@@ -290,7 +291,7 @@ async function sendEmails(order) {
               ${specialRequest ? `<tr><td style="padding:10px 0;color:rgba(255,255,255,0.5);">💬 Request</td><td style="padding:10px 0;font-style:italic;">"${specialRequest}"</td></tr>` : ''}
             </table>
             <div style="margin-top:24px;padding:16px;background:rgba(168,85,247,0.15);border-radius:12px;border:1px solid rgba(168,85,247,0.3);">
-              <a href="http://localhost:5173/admin" style="color:#a855f7;font-weight:700;">→ Open Admin Dashboard</a>
+              <a href="${adminDashboardUrl}" style="color:#a855f7;font-weight:700;">→ Open Admin Dashboard</a>
             </div>
           </div>
         `
