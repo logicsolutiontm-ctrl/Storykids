@@ -22,12 +22,14 @@ const TRANSLATIONS = {
     step3Title: "📦 Almost done!",
     emailLabel: "Your email",
     emailPlaceholder: "parent@email.com",
+    phoneLabel: "Your phone number",
+    phonePlaceholder: "+1 234 567 890",
     specialRequest: "Special request",
     specialRequestPlaceholder: "Anything specific you want in the story? (optional)",
     photoLabel: "Your child's photo",
     photoUpload: "Click to upload a photo",
     photoHint: "JPG or PNG • Will be turned into a 3D cartoon character",
-    langLabel: "Language:", lovesLabel: "Loves:", heroesLabel: "Heroes:", valuesSum: "Values:",
+    langLabel: "Language:", lovesLabel: "Loves:", heroesLabel: "Heroes:", valuesSum: "Values:", phoneSum: "Phone:",
     back: "← Back", next: "Next →", order: "🚀 Order My Story",
     generating: "Sending your order...", generatingHint: "We are securely saving your details",
     values: ['Bravery', 'Loyalty', 'Honesty', 'Kindness', 'Perseverance', 'Respect', 'Courage'],
@@ -45,10 +47,10 @@ const TRANSLATIONS = {
     interests: "Qu'est-ce que votre enfant aime?", interestsPlaceholder: "ex. lions, football, dinosaures",
     characters: "Héros ou personnages préférés", charactersPlaceholder: "ex. Superman, Simba, Spiderman",
     valuesLabel: "Valeurs à enseigner", valuesHint: "choisissez jusqu'à 3", selected: "sélectionnés",
-    step3Title: "📦 Presque terminé!", emailLabel: "Votre email", emailPlaceholder: "parent@email.com",
+    step3Title: "📦 Presque terminé!", emailLabel: "Votre email", emailPlaceholder: "parent@email.com", phoneLabel: "Votre numéro", phonePlaceholder: "+33 6 12 34 56 78",
     specialRequest: "Demande spéciale", specialRequestPlaceholder: "Quelque chose de spécifique? (optionnel)",
     photoLabel: "Photo de votre enfant", photoUpload: "Cliquez pour télécharger", photoHint: "JPG ou PNG • Transformé en 3D cartoon",
-    langLabel: "Langue:", lovesLabel: "Aime:", heroesLabel: "Héros:", valuesSum: "Valeurs:",
+    langLabel: "Langue:", lovesLabel: "Aime:", heroesLabel: "Héros:", valuesSum: "Valeurs:", phoneSum: "Téléphone:",
     back: "← Retour", next: "Suivant →", order: "🚀 Commander mon histoire",
     generating: "Envoi de votre commande...", generatingHint: "Nous enregistrons vos informations",
     values: ['Courage', 'Loyauté', 'Honnêteté', 'Gentillesse', 'Persévérance', 'Respect', 'Bravoure'],
@@ -66,10 +68,10 @@ const TRANSLATIONS = {
     interests: "ماذا يحب طفلك؟", interestsPlaceholder: "مثال: الأسود، كرة القدم",
     characters: "الأبطال أو الشخصيات المفضلة", charactersPlaceholder: "مثال: سوبرمان، سيمبا",
     valuesLabel: "القيم المراد تعليمها", valuesHint: "اختر حتى 3", selected: "تم اختيارهم",
-    step3Title: "📦 اكتمل تقريباً!", emailLabel: "بريدك الإلكتروني", emailPlaceholder: "parent@email.com",
+    step3Title: "📦 اكتمل تقريباً!", emailLabel: "بريدك الإلكتروني", emailPlaceholder: "parent@email.com", phoneLabel: "رقم هاتفك", phonePlaceholder: "+966 5x xxx xxxx",
     specialRequest: "طلب خاص", specialRequestPlaceholder: "هل تريد إضافة شيء مميز؟ (اختياري)",
     photoLabel: "صورة طفلك", photoUpload: "انقر لرفع صورة", photoHint: "JPG أو PNG • شخصية كرتونية ثلاثية الأبعاد",
-    langLabel: "اللغة:", lovesLabel: "يحب:", heroesLabel: "الأبطال:", valuesSum: "القيم:",
+    langLabel: "اللغة:", lovesLabel: "يحب:", heroesLabel: "الأبطال:", valuesSum: "القيم:", phoneSum: "الهاتف:",
     back: "→ رجوع", next: "→ التالي", order: "🚀 اطلب قصتي",
     generating: "جاري إرسال طلبك...", generatingHint: "نحن نقوم بحفظ بياناتك بأمان",
     values: ['الشجاعة', 'الوفاء', 'الصدق', 'اللطف', 'المثابرة', 'الاحترام', 'البسالة'],
@@ -87,10 +89,10 @@ const TRANSLATIONS = {
     interests: "¿Qué le gusta a tu hijo?", interestsPlaceholder: "ej. leones, fútbol",
     characters: "Héroes o personajes favoritos", charactersPlaceholder: "ej. Superman, Simba",
     valuesLabel: "Valores a enseñar", valuesHint: "elige hasta 3", selected: "seleccionados",
-    step3Title: "📦 ¡Casi listo!", emailLabel: "Tu correo electrónico", emailPlaceholder: "padre@correo.com",
+    step3Title: "📦 ¡Casi listo!", emailLabel: "Tu correo electrónico", emailPlaceholder: "padre@correo.com", phoneLabel: "Tu número de teléfono", phonePlaceholder: "+34 600 000 000",
     specialRequest: "Petición especial", specialRequestPlaceholder: "¿Algo específico? (opcional)",
     photoLabel: "Foto de tu hijo", photoUpload: "Haz clic para subir una foto", photoHint: "JPG o PNG • Personaje 3D animado",
-    langLabel: "Idioma:", lovesLabel: "Le encanta:", heroesLabel: "Héroes:", valuesSum: "Valores:",
+    langLabel: "Idioma:", lovesLabel: "Le encanta:", heroesLabel: "Héroes:", valuesSum: "Valores:", phoneSum: "Teléfono:",
     back: "← Atrás", next: "Siguiente →", order: "🚀 Pedir mi historia",
     generating: "Enviando tu pedido...", generatingHint: "Guardando tus datos de forma segura",
     values: ['Valentía', 'Lealtad', 'Honestidad', 'Bondad', 'Perseverancia', 'Respeto', 'Coraje'],
@@ -108,10 +110,10 @@ const TRANSLATIONS = {
     interests: "Что любит ваш ребёнок?", interestsPlaceholder: "напр. львы, футбол",
     characters: "Любимые герои или персонажи", charactersPlaceholder: "напр. Супермен, Симба",
     valuesLabel: "Ценности для воспитания", valuesHint: "выберите до 3", selected: "выбрано",
-    step3Title: "📦 Почти готово!", emailLabel: "Ваш email", emailPlaceholder: "родитель@почта.com",
+    step3Title: "📦 Почти готово!", emailLabel: "Ваш email", emailPlaceholder: "родитель@почта.com", phoneLabel: "Ваш телефон", phonePlaceholder: "+7 900 000-00-00",
     specialRequest: "Особое пожелание", specialRequestPlaceholder: "Что-то особенное? (необязательно)",
     photoLabel: "Фото вашего ребёнка", photoUpload: "Нажмите чтобы загрузить", photoHint: "JPG или PNG • 3D мультяшный персонаж",
-    langLabel: "Язык:", lovesLabel: "Любит:", heroesLabel: "Герои:", valuesSum: "Ценности:",
+    langLabel: "Язык:", lovesLabel: "Любит:", heroesLabel: "Герои:", valuesSum: "Ценности:", phoneSum: "Телефон:",
     back: "← Назад", next: "Далее →", order: "🚀 Заказать историю",
     generating: "Отправка заказа...", generatingHint: "Надёжно сохраняем ваши данные",
     values: ['Храбрость', 'Верность', 'Честность', 'Доброта', 'Упорство', 'Уважение', 'Мужество'],
@@ -129,10 +131,10 @@ const TRANSLATIONS = {
     interests: "Çocuğunuz neyi sever?", interestsPlaceholder: "örn. aslanlar, futbol",
     characters: "Favori kahramanlar veya karakterler", charactersPlaceholder: "örn. Süpermen, Simba",
     valuesLabel: "Öğretilecek değerler", valuesHint: "en fazla 3 seçin", selected: "seçildi",
-    step3Title: "📦 Neredeyse bitti!", emailLabel: "E-posta adresiniz", emailPlaceholder: "ebeveyn@eposta.com",
+    step3Title: "📦 Neredeyse bitti!", emailLabel: "E-posta adresiniz", emailPlaceholder: "ebeveyn@eposta.com", phoneLabel: "Telefon numaranız", phonePlaceholder: "+90 5xx xxx xx xx",
     specialRequest: "Özel istek", specialRequestPlaceholder: "Özel bir şey eklemek ister misiniz? (isteğe bağlı)",
     photoLabel: "Çocuğunuzun fotoğrafı", photoUpload: "Fotoğraf yüklemek için tıklayın", photoHint: "JPG veya PNG • 3D karikatür karaktere dönüştürülecek",
-    langLabel: "Dil:", lovesLabel: "Seviyor:", heroesLabel: "Kahramanlar:", valuesSum: "Değerler:",
+    langLabel: "Dil:", lovesLabel: "Seviyor:", heroesLabel: "Kahramanlar:", valuesSum: "Değerler:", phoneSum: "Telefon:",
     back: "← Geri", next: "İleri →", order: "🚀 Hikayemi Sipariş Et",
     generating: "Siparişiniz gönderiliyor...", generatingHint: "Bilgilerinizi güvenli bir şekilde kaydediyoruz",
     values: ['Cesaret', 'Sadakat', 'Dürüstlük', 'Nezaket', 'Azim', 'Saygı', 'Yiğitlik'],
@@ -492,7 +494,7 @@ function Card({ children, className, style }) {
 const EMPTY_FORM = {
   childName: '', age: '', language: 'English',
   interests: '', characters: '',
-  selectedValues: [], parentEmail: '',
+  selectedValues: [], parentEmail: '', parentPhone: '',
   specialRequest: '', photo: null, photoPreview: null,
   storyId: null, storyTitle: '', storyCover: null, storyPrice: null,
 }
@@ -563,6 +565,7 @@ export default function OrderForm() {
       formData.append('characters', form.characters)
       formData.append('selectedValues', JSON.stringify(form.selectedValues))
       formData.append('parentEmail', String(form.parentEmail || '').trim())
+      formData.append('parentPhone', String(form.parentPhone || '').trim())
       formData.append('specialRequest', form.specialRequest)
       if (form.photo) formData.append('photo', form.photo)
 
@@ -734,6 +737,11 @@ export default function OrderForm() {
                 value={form.parentEmail} onChange={e => update('parentEmail', e.target.value)} />
             </div>
             <div className="sk-field">
+              <label className="sk-label">{t.phoneLabel}</label>
+              <input className="sk-input" placeholder={t.phonePlaceholder} type="tel"
+                value={form.parentPhone} onChange={e => update('parentPhone', e.target.value)} />
+            </div>
+            <div className="sk-field">
               <label className="sk-label">{t.specialRequest}</label>
               <textarea className="sk-input sk-textarea"
                 placeholder={t.specialRequestPlaceholder}
@@ -777,10 +785,11 @@ export default function OrderForm() {
               <div className="sk-summary-row"><span>🦁</span><span>{t.lovesLabel} <strong>{form.interests}</strong></span></div>
               {form.characters && <div className="sk-summary-row"><span>⭐</span><span>{t.heroesLabel} <strong>{form.characters}</strong></span></div>}
               <div className="sk-summary-row"><span>💎</span><span>{t.valuesSum} <strong>{form.selectedValues.join(', ')}</strong></span></div>
+              <div className="sk-summary-row"><span>📱</span><span>{t.phoneSum} <strong>{form.parentPhone}</strong></span></div>
             </div>
             <div className="sk-btn-row">
               <button className="sk-btn-back" onClick={() => setStep(2)}>{t.back}</button>
-              <button className="sk-btn-next" disabled={!form.parentEmail || loading} onClick={handleSubmit}>
+              <button className="sk-btn-next" disabled={!form.parentEmail || !form.parentPhone || loading} onClick={handleSubmit}>
                 {t.order}
               </button>
             </div>

@@ -170,6 +170,7 @@ function OrdersTab() {
     const matchSearch = !search ||
       o.child_name?.toLowerCase().includes(search.toLowerCase()) ||
       o.parent_email?.toLowerCase().includes(search.toLowerCase()) ||
+      o.parent_phone?.toLowerCase().includes(search.toLowerCase()) ||
       o.language?.toLowerCase().includes(search.toLowerCase())
     return matchFilter && matchSearch
   })
@@ -274,6 +275,7 @@ function OrdersTab() {
             <div className="ad-modal-section">
               <div className="ad-modal-section-title">Parent Info</div>
               <div className="ad-modal-row"><span>📧</span><span>{selected.parent_email}</span></div>
+              {selected.parent_phone && <div className="ad-modal-row"><span>📱</span><span>{selected.parent_phone}</span></div>}
               <div className="ad-modal-row"><span>🕐</span><span>{formatDate(selected.created_at)}</span></div>
             </div>
             {selected.special_request && (

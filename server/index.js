@@ -118,6 +118,16 @@ function removeUnknownStoryColumn(updates, error) {
   return filtered
 }
 
+function removeUnknownOrderColumn(updates, error) {
+  const message = error?.message || ''
+  const match = message.match(/Could not find the '([^']+)' column of '(?:Orders|orders)'/)
+  if (!match) return null
+  const unknownColumn = match[1]
+  if (!(unknownColumn in updates)) return null
+  const { [unknownColumn]: _, ...filtered } = updates
+  return filtered
+}
+
 async function safeStoryInsert(updates) {
   let payload = { ...updates }
   if (!Object.keys(payload).length) {
@@ -148,6 +158,23 @@ async function safeStoryUpdate(id, updates) {
       return { data: null, error }
     }
     console.warn('⚠️ Removing unknown story column and retrying update:', Object.keys(payload).filter(k => !(k in filtered)))
+    payload = filtered
+  }
+}
+
+async function safeOrderInsert(updates) {
+  let payload = { ...updates }
+  if (!Object.keys(payload).length) {
+    return { data: null, error: new Error('No valid fields to insert') }
+  }
+  while (true) {
+    const { data, error } = await supabase.from('Orders').insert([payload]).select()
+    if (!error) return { data, error: null }
+    const filtered = removeUnknownOrderColumn(payload, error)
+    if (!filtered || Object.keys(filtered).length === Object.keys(payload).length) {
+      return { data: null, error }
+    }
+    console.warn('⚠️ Removing unknown order column and retrying insert:', Object.keys(payload).filter(k => !(k in filtered)))
     payload = filtered
   }
 }
@@ -281,7 +308,7 @@ app.use('/swagger', swaggerUi.serve, swaggerUi.setup(swaggerDocument))
 
 // ── EMAIL FUNCTION ──
 async function sendEmails(order) {
-  const { childName, parentEmail, language, interests, characters, selectedValues, specialRequest } = order
+  const { childName, parentEmail, parentPhone, language, interests, characters, selectedValues, specialRequest } = order
   const adminDashboardUrl = `${(process.env.FRONTEND_URL || 'https://storykids.fun').replace(/\/$/, '')}/admin`
   const fromEmail = DEFAULT_RESEND_FROM
   const supportEmail = DEFAULT_REPLY_TO_EMAIL
@@ -296,6 +323,7 @@ async function sendEmails(order) {
   }
   const uniqueAdminRecipients = [...new Set(adminRecipients)]
   const normalizedParentEmail = String(parentEmail || '').trim().toLowerCase()
+  const normalizedParentPhone = String(parentPhone || '').trim()
   const isValidEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedParentEmail)
 
   if (!resend && !smtpTransport) {
@@ -380,6 +408,7 @@ async function sendEmails(order) {
                 <tr><td style="padding:10px 0;color:rgba(255,255,255,0.5);">⭐ Heroes</td><td style="padding:10px 0;">${characters || '—'}</td></tr>
                 <tr><td style="padding:10px 0;color:rgba(255,255,255,0.5);">💎 Values</td><td style="padding:10px 0;">${Array.isArray(selectedValues) ? selectedValues.join(', ') : selectedValues}</td></tr>
                 <tr><td style="padding:10px 0;color:rgba(255,255,255,0.5);">📧 Email</td><td style="padding:10px 0;color:#a5b4fc;">${normalizedParentEmail}</td></tr>
+                <tr><td style="padding:10px 0;color:rgba(255,255,255,0.5);">📱 Phone</td><td style="padding:10px 0;">${normalizedParentPhone || '—'}</td></tr>
                 ${specialRequest ? `<tr><td style="padding:10px 0;color:rgba(255,255,255,0.5);">💬 Request</td><td style="padding:10px 0;font-style:italic;">"${specialRequest}"</td></tr>` : ''}
               </table>
               <div style="margin-top:24px;padding:16px;background:rgba(168,85,247,0.15);border-radius:12px;border:1px solid rgba(168,85,247,0.3);">
@@ -413,6 +442,7 @@ async function sendEmails(order) {
             <table style="width:100%;border-collapse:collapse;">
               <tr><td style="padding:10px 0;color:#6b7280;border-bottom:1px solid #e5e7eb;">👶 Child's name</td><td style="padding:10px 0;font-weight:700;color:#1a0533;border-bottom:1px solid #e5e7eb;">${childName}</td></tr>
               <tr><td style="padding:10px 0;color:#6b7280;border-bottom:1px solid #e5e7eb;">🌍 Story language</td><td style="padding:10px 0;color:#1a0533;border-bottom:1px solid #e5e7eb;">${language}</td></tr>
+              <tr><td style="padding:10px 0;color:#6b7280;border-bottom:1px solid #e5e7eb;">📱 Phone number</td><td style="padding:10px 0;color:#1a0533;border-bottom:1px solid #e5e7eb;">${normalizedParentPhone || '—'}</td></tr>
               <tr><td style="padding:10px 0;color:#6b7280;border-bottom:1px solid #e5e7eb;">💎 Values</td><td style="padding:10px 0;color:#1a0533;border-bottom:1px solid #e5e7eb;">${Array.isArray(selectedValues) ? selectedValues.join(', ') : selectedValues}</td></tr>
             </table>
             <div style="margin-top:28px;background:linear-gradient(135deg,#a855f7,#6366f1);padding:20px;border-radius:12px;text-align:center;">
@@ -446,9 +476,9 @@ app.get('/', (req, res) => {
 app.post('/submit-order', upload.single('photo'), async (req, res) => {
   console.log("=== INCOMING FROM REACT ===", req.body)
 
-  const { childName, age, language, interests, characters, selectedValues, specialRequest, parentEmail } = req.body
+  const { childName, age, language, interests, characters, selectedValues, specialRequest, parentEmail, parentPhone } = req.body
 
-  if (!childName || !age || !language || !parentEmail) {
+  if (!childName || !age || !language || !parentEmail || !parentPhone) {
     console.log("❌ REJECTED: Missing required fields")
     return res.status(400).json({ success: false, error: 'Missing required fields' })
   }
@@ -484,9 +514,7 @@ app.post('/submit-order', upload.single('photo'), async (req, res) => {
 
     console.log("💾 Saving to Supabase...")
 
-    const { data, error } = await supabase
-      .from('Orders')
-      .insert([{
+    const orderPayload = {
         child_name: childName,
         age: parseInt(age),
         language,
@@ -495,10 +523,12 @@ app.post('/submit-order', upload.single('photo'), async (req, res) => {
         values: parsedValues.join(', '),
         special_request: specialRequest || '',
         parent_email: parentEmail,
+        parent_phone: parentPhone,
         status: 'new',
         photo_url: photoUrl
-      }])
-      .select()
+      }
+
+    const { data, error } = await safeOrderInsert(orderPayload)
 
     console.log("=== SUPABASE ERROR ===", error)
     console.log("=== SUPABASE DATA ===", data)
@@ -512,7 +542,7 @@ app.post('/submit-order', upload.single('photo'), async (req, res) => {
 
     // Send emails and report any email configuration issues
     const emailResult = await sendEmails({
-      childName, parentEmail, language,
+      childName, parentEmail, parentPhone, language,
       interests, characters,
       selectedValues: parsedValues,
       specialRequest
@@ -561,6 +591,7 @@ function normalizeOrderRow(row, fallbackId) {
     values: row.values || row.selected_values || row.selectedValues || '',
     special_request: row.special_request || row.specialRequest || '',
     parent_email: row.parent_email || row.parentEmail || row.email || '',
+    parent_phone: row.parent_phone || row.parentPhone || row.phone || row.telephone || '',
     status: row.status || 'new',
     created_at: row.created_at || row.createdAt || new Date(0).toISOString(),
     photo_url: row.photo_url || row.photoUrl || row.photo || null,
