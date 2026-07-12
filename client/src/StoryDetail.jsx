@@ -259,7 +259,6 @@ export default function StoryDetail() {
   const storyAge = story?.age_range || '2-12'
   const storyPages = story?.page_count || 28
   const storyBinding = story?.binding || 'Sewn Hardcover'
-  const storyFormat = story?.format || 'Landscape'
 
   // parse reviews from story data
   let storyReviews = []
@@ -426,7 +425,7 @@ export default function StoryDetail() {
                 {story.pdf_url && (
                   <button 
                     className="sd-btn-outline" 
-                    onClick={() => window.open(`/proxy-pdf?url=${encodeURIComponent(story.pdf_url)}`, '_blank')}
+                    onClick={() => window.open(`${API_BASE}/proxy-pdf?url=${encodeURIComponent(story.pdf_url)}`, '_blank')}
                     style={{width: '100%'}}
                   >
                     📖 Preview Full Book

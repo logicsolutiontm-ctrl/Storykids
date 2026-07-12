@@ -490,7 +490,7 @@ function Card({ children, className, style }) {
 }
 
 const EMPTY_FORM = {
-  childName: '', age: '', language: '',
+  childName: '', age: '', language: 'English',
   interests: '', characters: '',
   selectedValues: [], parentEmail: '',
   specialRequest: '', photo: null, photoPreview: null,
@@ -516,12 +516,14 @@ export default function OrderForm() {
       storyPrice: state.price || null,
       childName: state.childName || '',
       age: state.age || '',
+      language: state.language || 'English',
     }
   })
   
   const [loading, setLoading] = useState(false)
   const [submitted, setSubmitted] = useState(false)
   const [error, setError] = useState(null)
+  const [emailWarning, setEmailWarning] = useState(null)
 
   useEffect(() => { localStorage.setItem('storykid-lang', uiLang) }, [uiLang])
   useEffect(() => { localStorage.setItem('storykid-theme', isDark ? 'dark' : 'light') }, [isDark])
@@ -551,6 +553,7 @@ export default function OrderForm() {
   const handleSubmit = async () => {
     setLoading(true)
     setError(null)
+    setEmailWarning(null)
     try {
       const formData = new FormData()
       formData.append('childName', form.childName)
@@ -559,7 +562,7 @@ export default function OrderForm() {
       formData.append('interests', form.interests)
       formData.append('characters', form.characters)
       formData.append('selectedValues', JSON.stringify(form.selectedValues))
-      formData.append('parentEmail', form.parentEmail)
+      formData.append('parentEmail', String(form.parentEmail || '').trim())
       formData.append('specialRequest', form.specialRequest)
       if (form.photo) formData.append('photo', form.photo)
 
@@ -569,6 +572,9 @@ export default function OrderForm() {
       })
       const data = await res.json()
       if (data.success) {
+        if (data.emailWarning) {
+          setEmailWarning(data.emailWarning)
+        }
         setSubmitted(true)
       } else {
         setError(data.error || 'Something went wrong. Please try again.')
@@ -585,6 +591,7 @@ export default function OrderForm() {
     setStep(1)
     setForm(EMPTY_FORM)
     setError(null)
+    setEmailWarning(null)
   }
 
   return (
@@ -663,7 +670,7 @@ export default function OrderForm() {
               <label className="sk-label">{t.storyLanguage}</label>
               <div className="sk-lang-grid">
                 {STORY_LANGUAGES.map(lang => (
-                  <button key={lang} className={`sk-lang-btn ${form.language === lang ? 'selected' : ''}`}
+                  <button key={lang} type="button" className={`sk-lang-btn ${form.language === lang ? 'selected' : ''}`}
                     onClick={() => update('language', lang)}>
                     {FLAGS[lang]} {lang}
                   </button>
@@ -799,6 +806,22 @@ export default function OrderForm() {
         {t.orderMessage(form.childName)}
       </p>
     </div>
+
+    {emailWarning && (
+      <div style={{
+        background:'#FFF7ED',
+        border:'2px dashed #FDBA74',
+        borderRadius:12,
+        padding:'12px 14px',
+        marginBottom:14,
+        color:'#9A3412',
+        fontWeight:700,
+        fontSize:13,
+        lineHeight:1.5,
+      }}>
+        Order saved, but email delivery warning: {emailWarning}
+      </div>
+    )}
 
     {/* Payment Instructions */}
     {/* Contact for Pricing */}

@@ -191,15 +191,6 @@ const LANGUAGES = [
   { code: 'Arabic',  flag: '🇸🇦', label: 'العربية' },
 ]
 
-const BOOK_COLORS = [
-  { bg: '#E76F51', spine: '#C05A3D' },
-  { bg: '#F4A261', spine: '#D4883F' },
-  { bg: '#2A9D8F', spine: '#1F7A6E' },
-  { bg: '#E9C46A', spine: '#C9A44A' },
-  { bg: '#8AB17D', spine: '#6A9160' },
-  { bg: '#5C7A92', spine: '#3E5F75' },
-]
-
 const css = `
   @import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;600;800&family=Nunito:wght@400;600;700;800&display=swap');
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -732,7 +723,12 @@ export default function LandingPage() {
   useEffect(() => {
     fetch(`${API_BASE}/stories`)
       .then(r => r.json())
-      .then(d => { if (d.success) setStories(d.stories.filter(s => s.published !== false)) })
+      .then(d => {
+        const storiesList = Array.isArray(d)
+          ? d
+          : (d?.success && Array.isArray(d.stories) ? d.stories : [])
+        setStories(storiesList.filter(s => s.published !== false))
+      })
       .catch(() => {})
   }, [])
 

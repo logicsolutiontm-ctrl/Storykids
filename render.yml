@@ -16,7 +16,15 @@ services:
         sync: false
       - key: RESEND_API_KEY
         sync: false
+      - key: COMPANY_EMAIL
+        sync: false
       - key: ADMIN_EMAIL
+        sync: false
+      - key: ORDER_NOTIFICATION_EMAIL
+        sync: false
+      - key: EMAIL_FROM
+        sync: false
+      - key: REPLY_TO_EMAIL
         sync: false
       - key: FRONTEND_URL
         sync: false

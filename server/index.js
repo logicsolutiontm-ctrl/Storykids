@@ -8,14 +8,33 @@ import { createClient } from '@supabase/supabase-js'
 import multer from 'multer'
 import { Resend } from 'resend'
 import swaggerUi from 'swagger-ui-express'
+import nodemailer from 'nodemailer'
 
-dotenv.config()
+dotenv.config({ path: path.join(path.dirname(fileURLToPath(import.meta.url)), '.env') })
 
 const app = express()
+const COMPANY_EMAIL = process.env.COMPANY_EMAIL || 'info@storykids.fun'
+const DEFAULT_ORDER_NOTIFICATION_EMAIL = process.env.ORDER_NOTIFICATION_EMAIL || process.env.ADMIN_EMAIL || COMPANY_EMAIL
+const DEFAULT_RESEND_FROM = process.env.EMAIL_FROM || process.env.RESEND_FROM || `StoryKid <${COMPANY_EMAIL}>`
+const DEFAULT_REPLY_TO_EMAIL = process.env.REPLY_TO_EMAIL || COMPANY_EMAIL
 const RESEND_API_KEY = process.env.RESEND_API_KEY || process.env.RESEND_KEY || ''
 if (!RESEND_API_KEY) console.warn('⚠️ RESEND_API_KEY is not set. Email sending will fail.')
 if (!process.env.SUPABASE_URL || !process.env.SUPABASE_KEY) console.warn('⚠️ SUPABASE_URL or SUPABASE_KEY is missing. Supabase database/storage will fail.')
 const resend = RESEND_API_KEY ? new Resend(RESEND_API_KEY) : null
+const smtpUser = process.env.SMTP_USER || process.env.GMAIL_USER || ''
+const smtpPass = process.env.SMTP_PASS || process.env.GMAIL_APP_PASSWORD || ''
+if (smtpUser && !smtpPass) {
+  console.warn('⚠️ GMAIL_USER/SMTP_USER is set but GMAIL_APP_PASSWORD/SMTP_PASS is missing. Falling back to Resend if configured.')
+}
+const smtpTransport = smtpUser && smtpPass
+  ? nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: smtpUser,
+        pass: smtpPass,
+      },
+    })
+  : null
 const supabase = process.env.SUPABASE_URL && process.env.SUPABASE_KEY
   ? createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY)
   : null
@@ -50,6 +69,8 @@ const isAllowedOrigin = (origin) => {
     || /(?:^|\.)vercel\.app$/i.test(origin)
     || /(?:^|\.)render\.com$/i.test(origin)
     || /(?:^|\.)netlify\.app$/i.test(origin)
+    || /(?:^|\.)ngrok-free\.app$/i.test(origin)
+    || /(?:^|\.)ngrok-free\.dev$/i.test(origin)
 }
 
 app.use(cors({
@@ -262,46 +283,113 @@ app.use('/swagger', swaggerUi.serve, swaggerUi.setup(swaggerDocument))
 async function sendEmails(order) {
   const { childName, parentEmail, language, interests, characters, selectedValues, specialRequest } = order
   const adminDashboardUrl = `${(process.env.FRONTEND_URL || 'https://storykids.fun').replace(/\/$/, '')}/admin`
+  const fromEmail = DEFAULT_RESEND_FROM
+  const supportEmail = DEFAULT_REPLY_TO_EMAIL
+  const adminRecipients = String(DEFAULT_ORDER_NOTIFICATION_EMAIL || '')
+    .split(/[;,]/)
+    .map((value) => value.trim().toLowerCase())
+    .filter(Boolean)
+  const smtpFallbackAdmin = String(smtpUser || '').trim().toLowerCase()
+  if (smtpFallbackAdmin && !adminRecipients.includes(smtpFallbackAdmin)) {
+    adminRecipients.push(smtpFallbackAdmin)
+  }
+  const uniqueAdminRecipients = [...new Set(adminRecipients)]
+  const normalizedParentEmail = String(parentEmail || '').trim().toLowerCase()
+  const isValidEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedParentEmail)
 
-  if (!resend) {
-    const reason = 'RESEND_API_KEY is not set. Emails cannot be sent.'
+  if (!resend && !smtpTransport) {
+    const reason = 'No email provider configured. Set RESEND_API_KEY or GMAIL_USER + GMAIL_APP_PASSWORD.'
     console.warn('⚠️', reason)
     return { success: false, reason }
   }
 
-  try {
-    const adminEmail = process.env.ADMIN_EMAIL
-    if (!adminEmail) {
-      console.warn('⚠️ ADMIN_EMAIL is not set. Admin notification email will be skipped.')
-    } else {
-      await resend.emails.send({
-        from: 'StoryKid <onboarding@resend.dev>',
-        to: adminEmail,
-        subject: `🆕 New Order — ${childName}'s Story`,
-        html: `
-          <div style="font-family:sans-serif;max-width:600px;margin:0 auto;background:#1a0533;color:white;padding:32px;border-radius:16px;">
-            <h1 style="color:#a855f7;margin-bottom:24px;">✨ New StoryKid Order!</h1>
-            <table style="width:100%;border-collapse:collapse;">
-              <tr><td style="padding:10px 0;color:rgba(255,255,255,0.5);width:140px;">👶 Child</td><td style="padding:10px 0;font-weight:700;">${childName}</td></tr>
-              <tr><td style="padding:10px 0;color:rgba(255,255,255,0.5);">🌍 Language</td><td style="padding:10px 0;">${language}</td></tr>
-              <tr><td style="padding:10px 0;color:rgba(255,255,255,0.5);">🦁 Interests</td><td style="padding:10px 0;">${interests}</td></tr>
-              <tr><td style="padding:10px 0;color:rgba(255,255,255,0.5);">⭐ Heroes</td><td style="padding:10px 0;">${characters || '—'}</td></tr>
-              <tr><td style="padding:10px 0;color:rgba(255,255,255,0.5);">💎 Values</td><td style="padding:10px 0;">${Array.isArray(selectedValues) ? selectedValues.join(', ') : selectedValues}</td></tr>
-              <tr><td style="padding:10px 0;color:rgba(255,255,255,0.5);">📧 Email</td><td style="padding:10px 0;color:#a5b4fc;">${parentEmail}</td></tr>
-              ${specialRequest ? `<tr><td style="padding:10px 0;color:rgba(255,255,255,0.5);">💬 Request</td><td style="padding:10px 0;font-style:italic;">"${specialRequest}"</td></tr>` : ''}
-            </table>
-            <div style="margin-top:24px;padding:16px;background:rgba(168,85,247,0.15);border-radius:12px;border:1px solid rgba(168,85,247,0.3);">
-              <a href="${adminDashboardUrl}" style="color:#a855f7;font-weight:700;">→ Open Admin Dashboard</a>
-            </div>
-          </div>
-        `
-      })
+  if (!isValidEmail) {
+    const reason = `Parent email is invalid: ${parentEmail}`
+    console.warn('⚠️', reason)
+    return { success: false, reason }
+  }
+
+  let adminSent = false
+
+  const sendEmail = async ({ to, subject, html, text, replyTo = supportEmail }) => {
+    if (resend) {
+      console.log('📨 Sending via Resend to', to)
+      try {
+        const result = await resend.emails.send({
+          from: fromEmail,
+          to,
+          subject,
+          html,
+          text,
+          replyTo,
+        })
+        if (result?.error) {
+          throw new Error(result.error.message || 'Resend email send failed')
+        }
+        return
+      } catch (error) {
+        console.warn('⚠️ Resend failed, attempting SMTP fallback:', error?.message || error)
+        if (!smtpTransport) {
+          throw error
+        }
+      }
     }
 
-    await resend.emails.send({
-      from: 'StoryKid <onboarding@resend.dev>',
-      to: parentEmail,
+    if (smtpTransport) {
+      console.log('📨 Sending via Gmail SMTP to', to)
+      const smtpFrom = process.env.SMTP_FROM || process.env.GMAIL_FROM || smtpUser
+      await smtpTransport.sendMail({
+        from: smtpFrom,
+        to,
+        subject,
+        html,
+        text,
+        replyTo,
+      })
+    }
+  }
+
+  if (!uniqueAdminRecipients.length) {
+    console.warn('⚠️ ORDER_NOTIFICATION_EMAIL/ADMIN_EMAIL is not set. Admin notification email will be skipped.')
+  } else {
+    for (const recipient of uniqueAdminRecipients) {
+      try {
+        await sendEmail({
+          to: recipient,
+          subject: `🆕 New Order — ${childName}'s Story`,
+          text: `New StoryKid order from ${childName} (${normalizedParentEmail}). Language: ${language}. Interests: ${interests}.`,
+          replyTo: normalizedParentEmail,
+          html: `
+            <div style="font-family:sans-serif;max-width:600px;margin:0 auto;background:#1a0533;color:white;padding:32px;border-radius:16px;">
+              <h1 style="color:#a855f7;margin-bottom:24px;">✨ New StoryKid Order!</h1>
+              <table style="width:100%;border-collapse:collapse;">
+                <tr><td style="padding:10px 0;color:rgba(255,255,255,0.5);width:140px;">👶 Child</td><td style="padding:10px 0;font-weight:700;">${childName}</td></tr>
+                <tr><td style="padding:10px 0;color:rgba(255,255,255,0.5);">🌍 Language</td><td style="padding:10px 0;">${language}</td></tr>
+                <tr><td style="padding:10px 0;color:rgba(255,255,255,0.5);">🦁 Interests</td><td style="padding:10px 0;">${interests}</td></tr>
+                <tr><td style="padding:10px 0;color:rgba(255,255,255,0.5);">⭐ Heroes</td><td style="padding:10px 0;">${characters || '—'}</td></tr>
+                <tr><td style="padding:10px 0;color:rgba(255,255,255,0.5);">💎 Values</td><td style="padding:10px 0;">${Array.isArray(selectedValues) ? selectedValues.join(', ') : selectedValues}</td></tr>
+                <tr><td style="padding:10px 0;color:rgba(255,255,255,0.5);">📧 Email</td><td style="padding:10px 0;color:#a5b4fc;">${normalizedParentEmail}</td></tr>
+                ${specialRequest ? `<tr><td style="padding:10px 0;color:rgba(255,255,255,0.5);">💬 Request</td><td style="padding:10px 0;font-style:italic;">"${specialRequest}"</td></tr>` : ''}
+              </table>
+              <div style="margin-top:24px;padding:16px;background:rgba(168,85,247,0.15);border-radius:12px;border:1px solid rgba(168,85,247,0.3);">
+                <a href="${adminDashboardUrl}" style="color:#a855f7;font-weight:700;">→ Open Admin Dashboard</a>
+              </div>
+            </div>
+          `
+        })
+        adminSent = true
+      } catch (err) {
+        console.error(`❌ Admin email error for ${recipient}:`, err)
+      }
+    }
+  }
+
+  try {
+    await sendEmail({
+      to: normalizedParentEmail,
       subject: `✨ We received ${childName}'s story order!`,
+      text: `Hi ${childName}, we received your StoryKid order. We will contact you at ${normalizedParentEmail} when your story is ready.`,
+      replyTo: supportEmail,
       html: `
         <div style="font-family:sans-serif;max-width:600px;margin:0 auto;">
           <div style="background:linear-gradient(135deg,#1a0533,#2d1b69);padding:40px 32px;border-radius:16px 16px 0 0;text-align:center;">
@@ -317,23 +405,25 @@ async function sendEmails(order) {
               <tr><td style="padding:10px 0;color:#6b7280;border-bottom:1px solid #e5e7eb;">💎 Values</td><td style="padding:10px 0;color:#1a0533;border-bottom:1px solid #e5e7eb;">${Array.isArray(selectedValues) ? selectedValues.join(', ') : selectedValues}</td></tr>
             </table>
             <div style="margin-top:28px;background:linear-gradient(135deg,#a855f7,#6366f1);padding:20px;border-radius:12px;text-align:center;">
-              <p style="color:white;margin:0;font-size:15px;">📬 We'll contact you at <strong>${parentEmail}</strong> when your story is ready!</p>
+              <p style="color:white;margin:0;font-size:15px;">📬 We'll contact you at <strong>${normalizedParentEmail}</strong> when your story is ready!</p>
             </div>
             <p style="color:#9ca3af;font-size:13px;margin-top:24px;text-align:center;">
               Thank you for choosing StoryKid ✨<br/>
-              Questions? Reply to this email anytime.
+              Questions? Reply to this email or reach us at ${supportEmail}.
             </p>
           </div>
         </div>
       `
     })
-
-    console.log('📧 Emails sent successfully!')
-    return { success: true }
   } catch (err) {
-    console.error('❌ Email error:', err)
-    return { success: false, reason: err.message || String(err) }
+    console.error('❌ Customer email error:', err)
+    const reason = err?.message || String(err)
+    return { success: false, reason: `Customer confirmation email failed: ${reason}` }
   }
+
+  const warning = adminSent ? null : 'Admin notification could not be delivered to any configured recipient.'
+  console.log('📧 Email send result:', { adminSent, customerSent: true, to: normalizedParentEmail, from: fromEmail, adminRecipients: uniqueAdminRecipients, warning })
+  return { success: true, warning }
 }
 
 // ── ROUTES ──
@@ -420,6 +510,8 @@ app.post('/submit-order', upload.single('photo'), async (req, res) => {
     const responsePayload = { success: true, orderId: data[0].id }
     if (!emailResult.success) {
       responsePayload.emailWarning = emailResult.reason || 'Email sending failed'
+    } else if (emailResult.warning) {
+      responsePayload.emailWarning = emailResult.warning
     }
 
     res.json(responsePayload)
@@ -430,22 +522,57 @@ app.post('/submit-order', upload.single('photo'), async (req, res) => {
   }
 })
 
+async function readOrdersFromTable(tableName) {
+  const { data, error } = await supabase
+    .from(tableName)
+    .select('*')
+    .order('created_at', { ascending: false })
+
+  if (error) {
+    const msg = (error.message || '').toLowerCase()
+    const code = error.code || ''
+    // Ignore missing legacy table and continue.
+    if (msg.includes('does not exist') || msg.includes('could not find the table') || code === 'PGRST205') return []
+    throw error
+  }
+
+  return Array.isArray(data) ? data : []
+}
+
+function normalizeOrderRow(row, fallbackId) {
+  return {
+    id: row.id || fallbackId,
+    child_name: row.child_name || row.childName || row.name || 'Unknown',
+    age: row.age ?? row.child_age ?? row.childAge ?? null,
+    language: row.language || row.story_language || row.storyLanguage || 'English',
+    interests: row.interests || row.hobbies || '',
+    characters: row.characters || row.character || '',
+    values: row.values || row.selected_values || row.selectedValues || '',
+    special_request: row.special_request || row.specialRequest || '',
+    parent_email: row.parent_email || row.parentEmail || row.email || '',
+    status: row.status || 'new',
+    created_at: row.created_at || row.createdAt || new Date(0).toISOString(),
+    photo_url: row.photo_url || row.photoUrl || row.photo || null,
+  }
+}
+
 app.get('/orders', async (req, res) => {
   if (!requireSupabase(res)) return
 
   try {
-    const { data, error } = await supabase
-      .from('Orders')
-      .select('*')
-      .order('created_at', { ascending: false })
+    const [ordersTable, legacyOrdersTable] = await Promise.all([
+      readOrdersFromTable('Orders'),
+      readOrdersFromTable('orders')
+    ])
 
-    if (error) {
-      console.error("❌ GET /orders error:", error)
-      return res.status(500).json({ success: false, error: 'Database error' })
-    }
+    const merged = [...ordersTable, ...legacyOrdersTable]
+      .map((row, index) => normalizeOrderRow(row, `legacy-${index}`))
+      .filter((row, index, arr) => arr.findIndex(candidate => candidate.id === row.id) === index)
+      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
 
-    res.json({ success: true, orders: data })
+    res.json({ success: true, orders: merged })
   } catch (err) {
+    console.error('❌ GET /orders error:', err)
     res.status(500).json({ success: false, error: 'Server error' })
   }
 })
@@ -455,14 +582,40 @@ app.patch('/orders/:id/status', async (req, res) => {
   const { id } = req.params
   const { status } = req.body
   try {
-    const { error } = await supabase
+    const primaryUpdate = await supabase
       .from('Orders')
       .update({ status })
+      .select('id')
       .eq('id', id)
 
-    if (error) return res.status(500).json({ success: false, error: 'Update failed' })
+    if (primaryUpdate.error) {
+      console.error('❌ Status update on Orders failed:', primaryUpdate.error)
+    }
+
+    const primaryUpdated = Array.isArray(primaryUpdate.data) && primaryUpdate.data.length > 0
+
+    if (!primaryUpdated) {
+      const legacyUpdate = await supabase
+        .from('orders')
+        .update({ status })
+        .select('id')
+        .eq('id', id)
+
+      if (legacyUpdate.error) {
+        const msg = (legacyUpdate.error.message || '').toLowerCase()
+        if (!msg.includes('does not exist')) {
+          console.error('❌ Status update on legacy orders failed:', legacyUpdate.error)
+          return res.status(500).json({ success: false, error: 'Update failed' })
+        }
+      }
+
+      const legacyUpdated = Array.isArray(legacyUpdate.data) && legacyUpdate.data.length > 0
+      if (!legacyUpdated) return res.status(404).json({ success: false, error: 'Order not found' })
+    }
+
     res.json({ success: true })
   } catch (err) {
+    console.error('❌ PATCH /orders/:id/status error:', err)
     res.status(500).json({ success: false, error: 'Server error' })
   }
 })
@@ -470,21 +623,25 @@ app.patch('/orders/:id/status', async (req, res) => {
 // ── STORIES ──
 
 app.get('/stories', async (req, res) => {
-  if (!supabase) {
-    console.error("❌ Supabase client is not initialized!");
-    return res.status(500).json({ error: "Database not connected" });
-  }
+  if (!requireSupabase(res)) return
 
   try {
-    const { data, error } = await supabase.from('stories').select('*');
-    if (error) throw error;
-    res.json(data);
+    const { data, error } = await supabase
+      .from('stories')
+      .select('*')
+      .order('created_at', { ascending: false })
+
+    if (error) {
+      console.error('❌ Fetch stories error:', error)
+      return res.status(500).json({ success: false, error: 'Failed to fetch stories' })
+    }
+
+    res.json({ success: true, stories: data || [] })
   } catch (err) {
-    console.error("❌ Fetch stories error:", err);
-    res.status(500).json({ error: "Failed to fetch stories" });
+    console.error('❌ Fetch stories server error:', err)
+    res.status(500).json({ success: false, error: 'Server error' })
   }
-});
-console.log("DEBUG: SUPABASE_URL set?", !!process.env.SUPABASE_URL);
+})
 
 // Get single story by id
 app.get('/stories/:id', async (req, res) => {

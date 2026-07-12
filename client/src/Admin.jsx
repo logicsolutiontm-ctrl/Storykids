@@ -314,16 +314,27 @@ function StoriesTab() {
   const [galleryFiles, setGalleryFiles] = useState([])
 
   useEffect(() => {
-    const loadStories = async () => {
-      setLoading(true)
-      try {
-        const res = await fetch(API_BASE + '/stories')
-        const data = await res.json()
-        if (data.success) setStories(data.stories)
-      } catch(e) { console.error(e) }
-      finally { setLoading(false) }
+    let cancelled = false
+
+    fetch(API_BASE + '/stories')
+      .then((res) => res.json())
+      .then((data) => {
+        if (cancelled) return
+        const storiesList = Array.isArray(data)
+          ? data
+          : (data?.success && Array.isArray(data.stories) ? data.stories : [])
+        setStories(storiesList)
+      })
+      .catch((error) => {
+        if (!cancelled) console.error(error)
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false)
+      })
+
+    return () => {
+      cancelled = true
     }
-    loadStories()
   }, [])
 
   const openEdit = (story) => {
@@ -645,21 +656,32 @@ function StoryPageTab() {
   const [pdfFile, setPdfFile] = useState(null)
   const [galleryFiles, setGalleryFiles] = useState([])
 
-  const loadStories = async () => {
-    setLoading(true)
-    try {
-      const res = await fetch(API_BASE + '/stories')
-      const data = await res.json()
-      if (data.success) setStories(data.stories)
-    } catch (e) {
-      console.error(e)
-    } finally {
-      setLoading(false)
-    }
+  const fetchStories = async () => {
+    const res = await fetch(API_BASE + '/stories')
+    const data = await res.json()
+    return Array.isArray(data)
+      ? data
+      : (data?.success && Array.isArray(data.stories) ? data.stories : [])
   }
 
   useEffect(() => {
-    loadStories()
+    let cancelled = false
+
+    fetchStories()
+      .then((storiesList) => {
+        if (cancelled) return
+        setStories(storiesList)
+      })
+      .catch((error) => {
+        if (!cancelled) console.error(error)
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false)
+      })
+
+    return () => {
+      cancelled = true
+    }
   }, [])
 
   const openDetail = (story) => {
@@ -761,7 +783,21 @@ function StoryPageTab() {
             <div style={{fontSize:13, color:'rgba(255,255,255,0.35)'}}>{stories.length} stories • edit page content, price and review data</div>
           </div>
         </div>
-        <button className="ad-refresh-btn" onClick={loadStories}>🔄 Refresh</button>
+            <button
+              className="ad-refresh-btn"
+              onClick={async () => {
+                setLoading(true)
+                try {
+                  setStories(await fetchStories())
+                } catch (error) {
+                  console.error(error)
+                } finally {
+                  setLoading(false)
+                }
+              }}
+            >
+              🔄 Refresh
+            </button>
       </div>
 
       {loading ? (
@@ -994,39 +1030,18 @@ function StoryPageTab() {
 // ── MAIN ADMIN ──
 export default function Admin() {
   const [tab, setTab] = useState('orders')
-  const [isLoggedIn, setIsLoggedIn] = useState(false)
-  const [isLoading, setIsLoading] = useState(true)
-
-  // Check if user is already authenticated
-  useEffect(() => {
+  const [isLoggedIn, setIsLoggedIn] = useState(() => {
     const authenticated = localStorage.getItem('admin_authenticated') === 'true'
     const sessionTime = parseInt(localStorage.getItem('admin_session_time') || '0')
     const sessionExpiry = 24 * 60 * 60 * 1000 // 24 hours
-    
-    if (authenticated && (Date.now() - sessionTime) < sessionExpiry) {
-      setIsLoggedIn(true)
-    } else {
-      localStorage.removeItem('admin_authenticated')
-      localStorage.removeItem('admin_session_time')
-    }
-    setIsLoading(false)
-  }, [])
+
+    return authenticated && (Date.now() - sessionTime) < sessionExpiry
+  })
 
   const handleLogout = () => {
     localStorage.removeItem('admin_authenticated')
     localStorage.removeItem('admin_session_time')
     setIsLoggedIn(false)
-  }
-
-  if (isLoading) {
-    return (
-      <div style={{minHeight:'100vh', display:'flex', alignItems:'center', justifyContent:'center', background:'linear-gradient(135deg, #0f0a1e 0%, #1a0f3a 50%, #0a1628 100%)', color:'white'}}>
-        <div style={{textAlign:'center'}}>
-          <div style={{fontSize:48, marginBottom:16}}>✨</div>
-          <p>Loading dashboard...</p>
-        </div>
-      </div>
-    )
   }
 
   if (!isLoggedIn) {

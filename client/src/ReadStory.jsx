@@ -54,7 +54,7 @@ export default function ReadStory() {
           <div className="rs-content">{content}</div>
         ) : story.pdf_url ? (
           <div className="rs-content" style={{padding:0}}>
-            <iframe src={`/proxy-pdf?url=${encodeURIComponent(story.pdf_url)}`} title="story-pdf" style={{width:'100%', height:'80vh', border:0}} />
+            <iframe src={`${API_BASE}/proxy-pdf?url=${encodeURIComponent(story.pdf_url)}`} title="story-pdf" style={{width:'100%', height:'80vh', border:0}} />
           </div>
         ) : (
           <div className="rs-content">Full story text is not available.</div>

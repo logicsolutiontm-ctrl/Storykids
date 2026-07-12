@@ -69,7 +69,11 @@ Backend (`server`):
 - `SUPABASE_URL`
 - `SUPABASE_KEY`
 - `RESEND_API_KEY`
+- `COMPANY_EMAIL` = `info@storykids.fun`
 - `ADMIN_EMAIL`
+- `ORDER_NOTIFICATION_EMAIL` = `info@storykids.fun`
+- `EMAIL_FROM` = `StoryKid <info@storykids.fun>`
+- `REPLY_TO_EMAIL` = `info@storykids.fun`
 - `FRONTEND_URL` = your frontend Render URL (for example `https://storykid-client.onrender.com`)
 - `CORS_ORIGIN` = same frontend URL
 

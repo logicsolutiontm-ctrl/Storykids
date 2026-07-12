@@ -7,12 +7,29 @@ Create a `.env` file in the `server/` folder with these values (do NOT commit se
 SUPABASE_URL=https://<your-project-id>.supabase.co
 SUPABASE_KEY=<your-supabase-service-role-or-anon-key>
 RESEND_API_KEY=<your-resend-api-key>
-ADMIN_EMAIL=you@example.com
+COMPANY_EMAIL=info@storykids.fun
+ADMIN_EMAIL=info@storykids.fun
+ORDER_NOTIFICATION_EMAIL=info@storykids.fun
+EMAIL_FROM=StoryKid <info@storykids.fun>
+REPLY_TO_EMAIL=info@storykids.fun
+GMAIL_USER=yourgmail@gmail.com
+GMAIL_APP_PASSWORD=your-16-char-app-password
 ```
 
 Where to find them:
 - SUPABASE_URL and keys: Supabase dashboard → Project → Settings → API. Use the `service_role` key for full backend access, or `anon` for limited public access.
 - RESEND_API_KEY: Resend dashboard — used for sending emails.
+- COMPANY_EMAIL: the main business inbox used as the default sender identity and reply destination.
+- ORDER_NOTIFICATION_EMAIL: the inbox that receives new order requests. Defaults to `ADMIN_EMAIL`, then `COMPANY_EMAIL`.
+- EMAIL_FROM: a sender address from a verified domain in Resend. For this project, set it to `StoryKid <info@storykids.fun>`.
+- REPLY_TO_EMAIL: the customer-facing reply-to address. For this project, set it to `info@storykids.fun`.
+- GMAIL_USER and GMAIL_APP_PASSWORD: optional alternative to Resend for sending from a personal Gmail account.
+
+If you do not use a domain email, set:
+- `GMAIL_USER`
+- `GMAIL_APP_PASSWORD` (create this in Google Account → Security → App Passwords)
+
+When Resend is configured, the server uses it first for both admin and customer emails. Gmail SMTP is only a fallback.
 
 ## Run locally
 1. Install deps and start backend (in `server/`):

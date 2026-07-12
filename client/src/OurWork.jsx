@@ -495,26 +495,28 @@ export default function OurWork() {
     fetch(`${API_BASE}/stories`)
       .then(res => res.json())
       .then(data => {
-        if (data.success) {
-          // Soft warm colors for covers if image is missing
-          const uiColors = ["#E76F51", "#F4A261", "#2A9D8F", "#E9C46A", "#8AB17D", "#5C7A92"];
-          
-          const formattedStories = data.stories
-            .filter(s => s.published !== false)
-            .map((s, index) => ({
-              id: s.id,
-              title: s.title || "Untitled Story",
-              child: s.subtitle || "A StoryKid Hero",
-              language: s.language || "English",
-              values: ["Adventure", "Magic"], 
-              cover: s.cover_url,
-              pdf: s.pdf_url,
-              color: uiColors[index % uiColors.length], 
-              emoji: "📖", 
-            }));
-            
-          setStories(formattedStories);
-        }
+        const storiesList = Array.isArray(data)
+          ? data
+          : (data?.success && Array.isArray(data.stories) ? data.stories : [])
+
+        // Soft warm colors for covers if image is missing
+        const uiColors = ["#E76F51", "#F4A261", "#2A9D8F", "#E9C46A", "#8AB17D", "#5C7A92"];
+
+        const formattedStories = storiesList
+          .filter(s => s.published !== false)
+          .map((s, index) => ({
+            id: s.id,
+            title: s.title || "Untitled Story",
+            child: s.subtitle || "A StoryKid Hero",
+            language: s.language || "English",
+            values: ["Adventure", "Magic"], 
+            cover: s.cover_url,
+            pdf: s.pdf_url,
+            color: uiColors[index % uiColors.length], 
+            emoji: "📖", 
+          }));
+
+        setStories(formattedStories);
       })
       .catch(err => console.error("Failed to fetch stories:", err))
       .finally(() => setLoading(false));
