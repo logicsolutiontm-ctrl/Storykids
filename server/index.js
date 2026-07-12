@@ -285,6 +285,7 @@ async function sendEmails(order) {
   const adminDashboardUrl = `${(process.env.FRONTEND_URL || 'https://storykids.fun').replace(/\/$/, '')}/admin`
   const fromEmail = DEFAULT_RESEND_FROM
   const supportEmail = DEFAULT_REPLY_TO_EMAIL
+  const normalizedCompanyEmail = String(COMPANY_EMAIL || '').trim().toLowerCase()
   const adminRecipients = String(DEFAULT_ORDER_NOTIFICATION_EMAIL || '')
     .split(/[;,]/)
     .map((value) => value.trim().toLowerCase())
@@ -311,7 +312,25 @@ async function sendEmails(order) {
 
   let adminSent = false
 
-  const sendEmail = async ({ to, subject, html, text, replyTo = supportEmail }) => {
+  const sendViaSmtp = async ({ to, subject, html, text, replyTo }) => {
+    console.log('📨 Sending via Gmail SMTP to', to)
+    const smtpFrom = process.env.SMTP_FROM || process.env.GMAIL_FROM || smtpUser
+    await smtpTransport.sendMail({
+      from: smtpFrom,
+      to,
+      subject,
+      html,
+      text,
+      replyTo,
+    })
+  }
+
+  const sendEmail = async ({ to, subject, html, text, replyTo = supportEmail, preferSmtp = false }) => {
+    if (preferSmtp && smtpTransport) {
+      await sendViaSmtp({ to, subject, html, text, replyTo })
+      return
+    }
+
     if (resend) {
       console.log('📨 Sending via Resend to', to)
       try {
@@ -336,16 +355,7 @@ async function sendEmails(order) {
     }
 
     if (smtpTransport) {
-      console.log('📨 Sending via Gmail SMTP to', to)
-      const smtpFrom = process.env.SMTP_FROM || process.env.GMAIL_FROM || smtpUser
-      await smtpTransport.sendMail({
-        from: smtpFrom,
-        to,
-        subject,
-        html,
-        text,
-        replyTo,
-      })
+      await sendViaSmtp({ to, subject, html, text, replyTo })
     }
   }
 
@@ -359,6 +369,7 @@ async function sendEmails(order) {
           subject: `🆕 New Order — ${childName}'s Story`,
           text: `New StoryKid order from ${childName} (${normalizedParentEmail}). Language: ${language}. Interests: ${interests}.`,
           replyTo: normalizedParentEmail,
+          preferSmtp: smtpTransport && recipient.endsWith('@storykids.fun') && recipient === normalizedCompanyEmail,
           html: `
             <div style="font-family:sans-serif;max-width:600px;margin:0 auto;background:#1a0533;color:white;padding:32px;border-radius:16px;">
               <h1 style="color:#a855f7;margin-bottom:24px;">✨ New StoryKid Order!</h1>
