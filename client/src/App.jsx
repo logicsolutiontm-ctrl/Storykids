@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { HashRouter, Routes, Route } from 'react-router-dom'
 import LandingPage from './LandingPage'
 import OrderForm from './components/OrderForm'
 import Admin from './Admin'
@@ -8,7 +8,7 @@ import ReadStory from './ReadStory'
 
 function App() {
   return (
-    <BrowserRouter>
+    <HashRouter>
       <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route path="/order" element={<OrderForm />} />
@@ -17,7 +17,7 @@ function App() {
         <Route path="/read/:id" element={<ReadStory />} />
         <Route path="/admin" element={<Admin />} />
       </Routes>
-    </BrowserRouter>
+    </HashRouter>
   )
 }
 
